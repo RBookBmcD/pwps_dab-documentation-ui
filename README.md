@@ -5,6 +5,10 @@ Author: Robert Book (rdbook@burnsmcd.com)**
 This software is a UI in powershell developed to aid in research and documentation lookup for the [pwps_dab powershell module](https://www.powershellgallery.com/packages/pwps_dab/24.0.2)
 
 ## Feature List
+Alpha 1.1
+* Added headers to ps1 and py files
+* Signed ps1 file to allow it to run on more secure systems
+
 Alpha 1.0:
 * Functions sorted by most used Verbs (5+ functions with the same verb)
 * From selected function, retrieves Get-Help -full execution on the function
@@ -23,7 +27,11 @@ To update the list of functions, you need to have python3 installed on your mach
 This will update the json file containing all of the functions sorted by their verbs.
 
 ## Change Log
-Alpha 1.0:
+Alpha 1.1: (7/22/2025)
+* Added digital signature to scripts to allow them to run on more secure machines
+* Added Documentation (file headers)
+
+Alpha 1.0: (7/21/2025)
 * Initial Creation
 * Added Basic functionality
 
