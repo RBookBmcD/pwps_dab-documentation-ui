@@ -88,19 +88,60 @@ $function_table_label = New-Object System.Windows.Forms.Label
 
 # function table
 $function_table = New-Object System.Windows.Forms.ListBox
-    $function_table.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.25) + 30), 30)
-    $function_table.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), ($WINDOW_HEIGHT * 0.9))
+    $function_table.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.25) + 30), 50)
+    $function_table.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), ($WINDOW_HEIGHT * 0.87))
     $function_table.ScrollAlwaysVisible = $true
+
+# add Search bar
+$function_table_search = New-Object System.Windows.Forms.TextBox
+    $function_table_search.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.25) + 30), 30)
+    $function_table_search.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), 20)
 
 # populate function table
 $function_table_content = [System.Collections.ArrayList]@()
 $verb_table.Add_MouseUp({
-    $function_table_content.clear()
-    foreach($verb in $verb_table.CheckedItems){
-        $function_table_content += ($sorted_functions.Verbs | Where-Object {$_.Verb -eq $verb}).Functions
+    if($verb_table.CheckedItems.Count -gt 0){
+        $temp_content = [System.Collections.ArrayList]@()
+        foreach($verb in $verb_table.CheckedItems){
+            $temp_content += ($sorted_functions.Verbs | Where-Object {$_.Verb -eq $verb}).Functions
+        }
+        if($function_table_search.Text){
+            $temp_content = $temp_content | Where-Object { $_ -like "*$($function_table_search.Text)*" }
+        }
+        $function_table.Items.Clear()
+        ($Global:function_table_content).Clear()
+        if($temp_content.Count -eq 1){
+            $function_table.Items.Add(($temp_content | Sort-Object))
+            ($Global:function_table_content).Add($temp_content)
+        }elseif($temp_content.Count -ne 0){
+            $function_table.Items.AddRange(($temp_content | Sort-Object))
+            ($Global:function_table_content).AddRange($temp_content)
+        }
+    } else {
+        ($Global:function_table_content).Clear()
+        $function_table.Items.Clear()
     }
-    $function_table.Items.Clear()
-    $function_table.Items.AddRange($function_table_content)
+})
+
+# add search functionality
+$function_table_search.Add_TextChanged({
+    if(($Global:function_table_content).Count -ne 0){
+        $search_text = $function_table_search.Text
+        if ($search_text -ne '') {
+            $filtered_functions = ($Global:function_table_content) | Where-Object { $_ -like "*$search_text*" }
+            $function_table.Items.Clear()
+            if($filtered_functions.Count -ne 0){
+                if($filtered_functions.Count -eq 1){
+                    $function_table.Items.Add($filtered_functions)
+                }else{
+                    $function_table.Items.AddRange($filtered_functions)
+                }
+            }
+        } else {
+            $function_table.Items.Clear()
+            $function_table.Items.AddRange(($Global:function_table_content))
+        }
+    }
 })
 
 # add documentation textbox
@@ -130,6 +171,7 @@ $ui.Controls.Add($verb_table)
 # add function table content
 $ui.Controls.Add($function_table_label)
 $ui.Controls.Add($function_table)
+$ui.Controls.Add($function_table_search)
 
 # add documentation results
 $ui.Controls.Add($doc_label)
