@@ -8,7 +8,7 @@
 ##################          #####################| |#   Creation Date           : 7/21/2025
 ##########    ######          ###################| |#   Modified By             :
 ########        #####           #################| |#   Modified Date           :
-########          #####        ##################| |#   Version                 : 1.0
+########          #####        ##################| |#   Version                 : 1.3
 ##########          #####     ###################| |#   PowerShell Version      : 5.1.26100.4652
 ############          ###########################| |#   ProjectWise Version     : 
 #############           #########################| |#   PWPS Module Version     : 24.0.2
@@ -33,6 +33,12 @@
 #####################################################################################################################################################################################################################
 ## 
 ## Change Log:
+## Alpha 1.3
+## - Increased window size
+##
+## Alpha 1.2
+## - Added search bar
+## 
 ## Alpha 1.1
 ## - Signed ps1 script to allow for execution on more secure machines
 ## - Added documentation for ps1 and py files
@@ -51,7 +57,7 @@ Add-Type -AssemblyName System.Drawing
 # get list of sorted functions from json file
 $sorted_functions = Get-Content -Path '.\sorted_functions.json' | ConvertFrom-Json
 
-$WINDOW_WIDTH = 1000
+$WINDOW_WIDTH = 1200
 $WINDOW_HEIGHT = 800
 
 $ui = New-Object System.Windows.Forms.Form
@@ -153,7 +159,7 @@ $doc_label = New-Object System.Windows.Forms.Label
 # add results textbox
 $doc_results = New-Object System.Windows.Forms.TextBox
     $doc_results.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.5) + 50), 30)
-    $doc_results.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.4), ($WINDOW_HEIGHT * 0.9))
+    $doc_results.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.44), ($WINDOW_HEIGHT * 0.9))
     $doc_results.Multiline = $true
     $doc_results.WordWrap = $false
     $doc_results.ReadOnly = $true

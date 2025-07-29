@@ -1,10 +1,13 @@
 # Project Wise Powershell Documentation UI
-**Version: Alpha 1.0<br>
+**Version: Alpha 1.3<br>
 Author: Robert Book (rdbook@burnsmcd.com)**
 
 This software is a UI in powershell developed to aid in research and documentation lookup for the [pwps_dab powershell module](https://www.powershellgallery.com/packages/pwps_dab/24.0.2)
 
 ## Feature List
+Alpha 1.3
+* Increased window size for easier reading of function documentation
+
 Alpha 1.2
 * Search Bar for searching functions
 
@@ -30,6 +33,9 @@ To update the list of functions, you need to have python3 installed on your mach
 This will update the json file containing all of the functions sorted by their verbs.
 
 ## Change Log
+Alpha 1.3 (7/29/2025)
+* Increased window size and Documentation window size for easier reading of Get-Help results
+
 Alpha 1.2 (7/22/2025)
 * Added Search bar for functions
 
@@ -42,7 +48,6 @@ Alpha 1.0: (7/21/2025)
 * Added Basic functionality
 
 ## Future Updates
-* Search functions by keyword (ctrl-f)
 * better format for help documentation?
 
 
