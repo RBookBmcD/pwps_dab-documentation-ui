@@ -63,7 +63,7 @@ $WINDOW_HEIGHT = 800
 $ui = New-Object System.Windows.Forms.Form
     $ui.Text = "PWPS Documentation"
     $ui.AutoScaleMode = 2
-    $ui.Size = New-Object System.Drawing.Size($WINDOW_WIDTH, $WINDOW_HEIGHT)
+    $ui.MinimumSize = New-Object System.Drawing.Size($WINDOW_WIDTH, $WINDOW_HEIGHT)
     $ui.StartPosition = "CenterScreen"
 
 $WINDOW_WIDTH = $ui.Width
@@ -81,6 +81,7 @@ $verb_table = New-Object System.Windows.Forms.CheckedListBox
     $verb_table.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), ($WINDOW_HEIGHT * 0.9))
     $verb_table.CheckOnClick = $true
     $verb_table.ThreeDCheckBoxes = $true
+    $verb_table.Anchor = 7
 
 # populate table
 $verb_list = $sorted_functions.Verbs
@@ -97,6 +98,7 @@ $function_table = New-Object System.Windows.Forms.ListBox
     $function_table.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.25) + 30), 50)
     $function_table.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), ($WINDOW_HEIGHT * 0.87))
     $function_table.ScrollAlwaysVisible = $true
+    $function_table.Anchor = 7
 
 # add Search bar
 $function_table_search = New-Object System.Windows.Forms.TextBox
@@ -164,6 +166,7 @@ $doc_results = New-Object System.Windows.Forms.TextBox
     $doc_results.WordWrap = $false
     $doc_results.ReadOnly = $true
     $doc_results.ScrollBars = 3
+    $doc_results.Anchor = 15
 
 # add documentation to textbox when function is selected
 $function_table.Add_SelectedIndexChanged({
