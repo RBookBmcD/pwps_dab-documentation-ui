@@ -1,10 +1,14 @@
 # Project Wise Powershell Documentation UI
-**Version: Beta 1.0<br>
+**Version: Beta 1.1<br>
 Author: Robert Book (rdbook@burnsmcd.com)**
 
 This software is a UI in powershell developed to aid in research and documentation lookup for the [pwps_dab powershell module](https://www.powershellgallery.com/packages/pwps_dab/24.0.2)
 
 ## Feature List
+Beta 1.1
+* Changed function retrieval from file to looking directly at module
+* Able to provide documentation for any version of pwps_dab
+
 Beta 1.0
 * Added Adjustable window size
 * Finished [How to Use](#how-to-use) section of documentation 
@@ -25,7 +29,7 @@ Alpha 1.0:
 * Ability to look at 1+ verb groups
 
 ## How To Use
-In order to run this software, you must have the latest version of pwps_dab installed on your machine. <br>There should be a provided JSON file that contains all of the functions for version 24.0.2 of pwps_dab. (sorted_functions.json) <br>
+In order to run this software, you must have any version of pwps_dab installed on your machine.
 
 To use this software:
 1) Download Zip file from this github repository (Code > Download ZIP)
@@ -41,17 +45,20 @@ To use this software:
    a) Launch an instance of Powershell <br>
    b) Type relative or absolute file path to extracted folder + "\GetPwpsDabDocsUI.ps1" <br>
 6) Success!! You should see both a command prompt running powershell pop-up (for verbose messages) as well as a window with the title: "PWPS Documentation" 
+7) You may be warned about the certificate being unverified. This is because I signed the script with my own credentials which are not gloably recongnized. You will have to accept the warning to run this script.
 
 ### Updating list of functions
-To update the list of functions, you need to have python3 installed on your machine.
-1) Go to [pwps_dab module Powershll Gallery](https://www.powershellgallery.com/packages/pwps_dab/24.0.2) page
-2) Under "Package Details", copy all of the functions.
-3) Paste the copied list into all_pwps_functions.txt
-4) run SortPwpsFunctions.py
-
-This will update the json file containing all of the functions sorted by their verbs.
+With update Beta 1.1, the list of functions will automatically get pulled from the module info in PowerShell. This should allow this script to run with any and all versions of pwps_dab you may have installed on your machine.
 
 ## Change Log
+Beta 1.1 (4/8/2026)
+* Adjusted how functions are provided to the UI
+  * Previous method: txt file => json file => read file in PowerShell
+  * New Method: read module info in PowerShell
+* Silenced annoying version info created by first run of pwps_dab in a PowerShell instance
+* Removed files deemed unecessary by function update
+  * Kept all functions txt for reference
+
 Beta 1.0 (8/18/2025)
 * Added adjustable window size with anchor attributes
 
@@ -71,6 +78,7 @@ Alpha 1.0: (7/21/2025)
 
 ## Future Updates
 * better format for help documentation?
+* App info page
 
 
 
