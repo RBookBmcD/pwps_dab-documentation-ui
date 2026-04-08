@@ -55,7 +55,50 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # get list of sorted functions from json file
-$sorted_functions = Get-Content -Path '.\sorted_functions.json' | ConvertFrom-Json
+# $sorted_functions = Get-Content -Path '.\sorted_functions.json' | ConvertFrom-Json
+
+# Startup processes
+# silence annoying information from loading pwps module
+if([System.Environment]::GetEnvironmentVariable("SuppressPSOutput").Length -le 0){
+    [System.Environment]::SetEnvironmentVariable("SuppressPSOutput", "True")
+}
+
+# load pwps_module into current session
+Import-Module -Name "pwps_dab" -WarningAction:SilentlyContinue
+
+$pwps_bin = (Get-Module -Name "pwps_dab" | Where-Object {$_.ModuleType -eq "Binary"})
+
+# $sorted_function_names = ($pwps_bin.ExportedCmdlets.Values.Name | Sort-Object)
+# Get Verb Hash
+$function_verb_hash = @{}
+foreach($verb in $pwps_bin.ExportedCmdlets.Values.Verb){
+    if(-not $function_verb_hash[$verb]){$function_verb_hash[$verb] = 1}
+    else{$function_verb_hash[$verb] += 1}
+}
+$misc_verbs = ($function_verb_hash.GetEnumerator() | Where-Object {$_.Value -le 20})
+$function_verb_table = ($function_verb_hash.GetEnumerator() | Where-Object {$_.Value -gt 20} | Sort-Object Name)
+$function_verb_table += [PSCustomObject]@{Name="Misc";Key="Misc";Value=$misc_verbs.Count} # add Misc to end of list
+
+# populate function table helper function
+$Global:function_table_content = [System.Collections.ArrayList]@()
+function Populate-Table{
+    if($verb_table.CheckedItems.Count -gt 0){
+        $temp_content = $pwps_bin.ExportedCmdlets.Values | Where-Object {($_.Verb -in $verb_table.CheckedItems) -and ($_.Name -like "*$($function_table_search.Text)*")}
+        if($verb_table.CheckedItems -contains "Misc"){$temp_content += $pwps_bin.ExportedCmdlets.Values | Where-Object {($_.Verb -in $misc_verbs.Name) -and ($_.Name -like "*$($function_table_search.Text)*")}}
+        $function_table.Items.Clear()
+        ($Global:function_table_content).Clear()
+        if($temp_content.Count -eq 1){
+            $function_table.Items.Add(($temp_content))
+            ($Global:function_table_content).Add($temp_content)
+        }elseif($temp_content.Count -ne 0){
+            $function_table.Items.AddRange(($temp_content))
+            ($Global:function_table_content).AddRange($temp_content)
+        }
+    } else {
+        ($Global:function_table_content).Clear()
+        $function_table.Items.Clear()
+    }
+}
 
 $WINDOW_WIDTH = 1200
 $WINDOW_HEIGHT = 800
@@ -73,7 +116,7 @@ $WINDOW_HEIGHT = $ui.Height
 $verb_table_title = New-Object System.Windows.Forms.Label
     $verb_table_title.Location = New-Object System.Drawing.Point(10, 10)
     $verb_table_title.AutoSize = $true
-    $verb_table_title.Text = "Verb"
+    $verb_table_title.Text = "Verbs"
 
 # Verb Table
 $verb_table = New-Object System.Windows.Forms.CheckedListBox
@@ -81,11 +124,29 @@ $verb_table = New-Object System.Windows.Forms.CheckedListBox
     $verb_table.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), ($WINDOW_HEIGHT * 0.9))
     $verb_table.CheckOnClick = $true
     $verb_table.ThreeDCheckBoxes = $true
+    $verb_table.ItemHeight = 20
     $verb_table.Anchor = 7
 
-# populate table
-$verb_list = $sorted_functions.Verbs
-$verb_table.Items.AddRange(($verb_list.Verb | Sort-Object))
+# Select All Checkbox
+$select_all_verbs = New-Object System.Windows.Forms.CheckBox
+    $select_all_verbs.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.25) - 20), 10)
+    $select_all_verbs.AutoSize = $true
+    $select_all_verbs.Text = "All"
+
+# Action when all button is selected
+$select_all_verbs.Add_MouseDown({
+    $setCheck = (-not ($verb_table.CheckedItems.Count -eq $verb_table.Items.Count))
+    if($select_all_verbs.CheckState -eq 2){
+        $setCheck = $false
+    }
+    for($i = 0; $i -lt $verb_table.Items.Count; $i+=1){
+        $verb_table.SetItemChecked($i, $setCheck)
+    }
+    Populate-Table
+})
+
+# populate verb table
+$verb_table.Items.AddRange($function_verb_table.Name)
 
 # Add function list
 $function_table_label = New-Object System.Windows.Forms.Label
@@ -105,52 +166,11 @@ $function_table_search = New-Object System.Windows.Forms.TextBox
     $function_table_search.Location = New-Object System.Drawing.Point((($WINDOW_WIDTH * 0.25) + 30), 30)
     $function_table_search.Size = New-Object System.Drawing.Size(($WINDOW_WIDTH * 0.25), 20)
 
-# populate function table
-$function_table_content = [System.Collections.ArrayList]@()
-$verb_table.Add_MouseUp({
-    if($verb_table.CheckedItems.Count -gt 0){
-        $temp_content = [System.Collections.ArrayList]@()
-        foreach($verb in $verb_table.CheckedItems){
-            $temp_content += ($sorted_functions.Verbs | Where-Object {$_.Verb -eq $verb}).Functions
-        }
-        if($function_table_search.Text){
-            $temp_content = $temp_content | Where-Object { $_ -like "*$($function_table_search.Text)*" }
-        }
-        $function_table.Items.Clear()
-        ($Global:function_table_content).Clear()
-        if($temp_content.Count -eq 1){
-            $function_table.Items.Add(($temp_content | Sort-Object))
-            ($Global:function_table_content).Add($temp_content)
-        }elseif($temp_content.Count -ne 0){
-            $function_table.Items.AddRange(($temp_content | Sort-Object))
-            ($Global:function_table_content).AddRange($temp_content)
-        }
-    } else {
-        ($Global:function_table_content).Clear()
-        $function_table.Items.Clear()
-    }
+$verb_table.Add_MouseDown({
+    if($verb_table.CheckedItems.Count -eq $verb_table.Items.Count){$select_all_verbs.CheckState = 2}
 })
-
-# add search functionality
-$function_table_search.Add_TextChanged({
-    if(($Global:function_table_content).Count -ne 0){
-        $search_text = $function_table_search.Text
-        if ($search_text -ne '') {
-            $filtered_functions = ($Global:function_table_content) | Where-Object { $_ -like "*$search_text*" }
-            $function_table.Items.Clear()
-            if($filtered_functions.Count -ne 0){
-                if($filtered_functions.Count -eq 1){
-                    $function_table.Items.Add($filtered_functions)
-                }else{
-                    $function_table.Items.AddRange($filtered_functions)
-                }
-            }
-        } else {
-            $function_table.Items.Clear()
-            $function_table.Items.AddRange(($Global:function_table_content))
-        }
-    }
-})
+$verb_table.Add_MouseUp({Populate-Table})
+$function_table_search.Add_TextChanged({Populate-Table})
 
 # add documentation textbox
 $doc_label = New-Object System.Windows.Forms.Label
@@ -176,6 +196,7 @@ $function_table.Add_SelectedIndexChanged({
 # add verb table content
 $ui.Controls.Add($verb_table_title)
 $ui.Controls.Add($verb_table)
+$ui.Controls.Add($select_all_verbs)
 
 # add function table content
 $ui.Controls.Add($function_table_label)
@@ -191,8 +212,8 @@ $ui.ShowDialog()
 # SIG # Begin signature block
 # MIIFlAYJKoZIhvcNAQcCoIIFhTCCBYECAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUpLP0J+t6TLgUgv9KLcuoTD4c
-# H+SgggMiMIIDHjCCAgagAwIBAgIQFuWtlV1oWoBD/IAKE+2oCzANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUCuFetWDjY/22Kk1+XZ+MdAgq
+# jtigggMiMIIDHjCCAgagAwIBAgIQFuWtlV1oWoBD/IAKE+2oCzANBgkqhkiG9w0B
 # AQUFADAnMSUwIwYDVQQDDBxSQm9vayBwd3BzX2RhYiBEb2N1bWVudGF0aW9uMB4X
 # DTI1MDcyMjE0MDMzNVoXDTI2MDcyMjE0MjMzNVowJzElMCMGA1UEAwwcUkJvb2sg
 # cHdwc19kYWIgRG9jdW1lbnRhdGlvbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
@@ -212,11 +233,11 @@ $ui.ShowDialog()
 # AgEBMDswJzElMCMGA1UEAwwcUkJvb2sgcHdwc19kYWIgRG9jdW1lbnRhdGlvbgIQ
 # FuWtlV1oWoBD/IAKE+2oCzAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIBDDEKMAig
 # AoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEEAYI3AgEL
-# MQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUf8bTx0JRJUD60SVEPZi4
-# HwBgp7QwDQYJKoZIhvcNAQEBBQAEggEAJ0EDzB9aReDEu8gghvSju7eCIhI6gU/w
-# sPlTWuNk+dO2GavIzcPvqOlzm6s/yJSsgoVbu654Q5+fMz5AWVTAbl+75IEdzFa2
-# 9DMUwylyHVcTXzemnXn5Zozl7O8X6PzAW+7h1Jxx8cdKpvwDZhDpw/jFSBJk9kSK
-# afbmpHR1w0aTkSNGqeMFGuP06BKaDKmzS8n3DNn0l0Ysd+/AnyfDDp8x/jolfN+A
-# vfkilpXyvJShu4TLcBxrtW0+v8OH5QPyXj5zH3FTW5s3sQhy1ZumtFViupWj8Jls
-# OBxTJUA8bip0f4jW5FGeMSwDLjdwY0uXH4/jjiwiRS/ZFOl0WHZheQ==
+# MQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUP74qE2QJmT1MMyT9SqkT
+# V7RbkF4wDQYJKoZIhvcNAQEBBQAEggEAK74JtpwCMd1V65YXmf62ETN5w+Jpg6rV
+# NC/UD8ZKWK0RSH4gb3qHJ3YojuUq/hlB7ca9EFX1G5/xN9zwDKwMO4ZuWnXi52lg
+# e+UYaISS/sD/IMDQ2Cuy86TjGg0CvsWK2uEKRLyF+NPjrRvEmUxz+glDotzakrYi
+# iLz1CpqJnerTir3tIx8YUttBhnDHJV9HsLHiMZtMwIL6l+LZsMG2n8eu0xZvFGgW
+# SQ92Au1POgtdQGyRz3ZYOr8aK8J8v1tOvF+pa3wZ3EPDz+7Ha5NLh+ARLJ+b9ljI
+# Q/+42+DTiERjwOpw5VtGZZC15TsR16N4m2dC9z71T0uQuq5hgD/xbw==
 # SIG # End signature block
